@@ -1,4 +1,3 @@
-
 package vista;
 
 import config.Conexion;
@@ -7,14 +6,15 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 public class Principal extends javax.swing.JFrame {
-    
+
     Conexion con = new Conexion();
     Connection cn;
     Statement st;
     ResultSet rs;
     DefaultTableModel modelo;
     int id;
-    
+    boolean nolistar = false;
+
     public Principal() {
         initComponents();
         setLocationRelativeTo(null);
@@ -166,8 +166,18 @@ public class Principal extends javax.swing.JFrame {
         });
 
         btbEliminar.setText("ELIMINAR");
+        btbEliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btbEliminarActionPerformed(evt);
+            }
+        });
 
         btbNuevo.setText("NUEVO");
+        btbNuevo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btbNuevoActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -279,18 +289,23 @@ public class Principal extends javax.swing.JFrame {
 
     private void btbAgregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btbAgregarActionPerformed
         Agregar();
-        listar();
+        if (nolistar) {
+            nolistar = false;
+        } else {
+            listar();
+            nuevo();
+        }
     }//GEN-LAST:event_btbAgregarActionPerformed
 
     private void TablaDatosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TablaDatosMouseClicked
-        int fila=TablaDatos.getSelectedRow();
-        if(fila==-1){
-            JOptionPane.showInputDialog(null, "usuario no seleccionado");
-        }else{
-            id=Integer.parseInt((String)TablaDatos.getValueAt(fila, 0).toString());
-            String dni=(String)TablaDatos.getValueAt(fila, 1);
-            String nom=(String)TablaDatos.getValueAt(fila, 2);
-            txtId.setText(""+id);
+        int fila = TablaDatos.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(null, "usuario no seleccionado");
+        } else {
+            id = Integer.parseInt((String) TablaDatos.getValueAt(fila, 0).toString());
+            String dni = (String) TablaDatos.getValueAt(fila, 1);
+            String nom = (String) TablaDatos.getValueAt(fila, 2);
+            txtId.setText("" + id);
             txtDni.setText(dni);
             txtNombre.setText(nom);
         }
@@ -298,24 +313,51 @@ public class Principal extends javax.swing.JFrame {
 
     private void btbModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btbModificarActionPerformed
         modificar();
-        listar();
+        if (nolistar) {
+            nolistar = false;
+        } else {
+            listar();
+            nuevo();
+        }
+
     }//GEN-LAST:event_btbModificarActionPerformed
 
-    void modificar(){
-        String nom=txtNombre.getText();
-        String dni=txtDni.getText();
-        String sql="Update persona set DNI='"+dni+"',Nombre='"+nom+"' where Id="+id;
-        if(dni.equals("")||nom.equals("")){
-            JOptionPane.showMessageDialog(null, "Debe ingresar datos");
+    private void btbEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btbEliminarActionPerformed
+        eliminar();
+        if (nolistar) {
+            nolistar = false;
+        } else {
+            listar();
+            nuevo();
+        }
+    }//GEN-LAST:event_btbEliminarActionPerformed
+
+    private void btbNuevoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btbNuevoActionPerformed
+        nuevo();
+    }//GEN-LAST:event_btbNuevoActionPerformed
+
+    void modificar() {
+        int filaseleccionado = TablaDatos.getSelectedRow();
+        if (filaseleccionado == -1) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar una fila");
+            nolistar = true;
         }else{
+        String nom = txtNombre.getText();
+        String dni = txtDni.getText();
+        String sql = "Update persona set DNI='" + dni + "',Nombre='" + nom + "' where Id=" + id;
+        if (dni.equals("") || nom.equals("")) {
+            JOptionPane.showMessageDialog(null, "Debe ingresar datos");
+            nolistar = true;
+        } else {
             try {
-                cn=con.getConnection();
-                st=cn.createStatement();
+                cn = con.getConnection();
+                st = cn.createStatement();
                 st.executeUpdate(sql);
                 JOptionPane.showMessageDialog(null, "usuario Actualizado");
                 limpiarTabla();
             } catch (Exception e) {
             }
+        }
         }
     }
 
@@ -350,35 +392,37 @@ public class Principal extends javax.swing.JFrame {
             }
         });
     }
-    
-    void listar(){
+
+    void listar() {
         String sql = "select * from persona";
         try {
-            cn=con.getConnection();
-            st=cn.createStatement();
-            rs=st.executeQuery(sql);
-            Object[]persona=new Object[3];
-            modelo=(DefaultTableModel)TablaDatos.getModel();
-            while (rs.next()){
-            persona[0]=rs.getInt("Id");
-            persona[1]=rs.getString("DNI");           
-            persona[2]=rs.getString("Nombre");
-            modelo.addRow(persona);
-        }
+            cn = con.getConnection();
+            st = cn.createStatement();
+            rs = st.executeQuery(sql);
+            Object[] persona = new Object[3];
+            modelo = (DefaultTableModel) TablaDatos.getModel();
+            while (rs.next()) {
+                persona[0] = rs.getInt("Id");
+                persona[1] = rs.getString("DNI");
+                persona[2] = rs.getString("Nombre");
+                modelo.addRow(persona);
+            }
             TablaDatos.setModel(modelo);
         } catch (Exception e) {
         }
     }
- void Agregar(){
-        String dni=txtDni.getText();
-        String nom=txtNombre.getText();
-        if(dni.equals("")||nom.equals("")){
+
+    void Agregar() {
+        String dni = txtDni.getText();
+        String nom = txtNombre.getText();
+        if (dni.equals("") || nom.equals("")) {
             JOptionPane.showMessageDialog(null, "Las cajas estan vacias...!");
-        }else{
-            String sql="insert into persona(DNI,Nombre)values('"+dni+"','"+nom+"')";
+            nolistar = true;
+        } else {
+            String sql = "insert into persona(DNI,Nombre)values('" + dni + "','" + nom + "')";
             try {
-                cn=con.getConnection();
-                st=cn.createStatement();
+                cn = con.getConnection();
+                st = cn.createStatement();
                 st.executeUpdate(sql);
                 JOptionPane.showMessageDialog(null, "Usuario agregado");
                 limpiarTabla();
@@ -386,13 +430,38 @@ public class Principal extends javax.swing.JFrame {
             }
         }
     }
- 
-void limpiarTabla(){
-    for(int i=0; i<=TablaDatos.getRowCount()-1; i++){
-        modelo.removeRow(i);
-        i=i-1;
+
+    void limpiarTabla() {
+        for (int i = 0; i <= TablaDatos.getRowCount() - 1; i++) {
+            modelo.removeRow(i);
+            i = i - 1;
+        }
     }
-} 
+
+    void eliminar() {
+        int filaseleccionado = TablaDatos.getSelectedRow();
+        if (filaseleccionado == -1) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar una fila");
+            nolistar = true;
+        } else {
+            String sql = "delete from persona where Id=" + id;
+            try {
+                cn = con.getConnection();
+                st = cn.createStatement();
+                st.executeUpdate(sql);
+                JOptionPane.showMessageDialog(null, "Usuario eliminado con exito");
+                limpiarTabla();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    void nuevo() {
+        txtId.setText("");
+        txtDni.setText("");
+        txtNombre.setText("");
+        txtDni.requestFocus();
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable TablaDatos;
     private javax.swing.JButton btbAgregar;
